@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>2026 제주 미션트립 — 내 정보 조회</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+      background: #f0f4f8;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 32px 16px 64px;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    header h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #1a3a5c;
+      margin-bottom: 6px;
+    }
+
+    header p {
+      font-size: 0.9rem;
+      color: #6b7a8d;
+    }
+
+    .search-box {
+      width: 100%;
+      max-width: 480px;
+      position: relative;
+      margin-bottom: 24px;
+    }
+
+    .search-box input {
+      width: 100%;
+      padding: 14px 48px 14px 18px;
+      font-size: 1rem;
+      border: 2px solid #d1dbe8;
+      border-radius: 12px;
+      outline: none;
+      background: #fff;
+      transition: border-color 0.2s;
+      color: #1a3a5c;
+    }
+
+    .search-box input:focus {
+      border-color: #3b82f6;
+    }
+
+    .search-box input::placeholder {
+      color: #aab4c0;
+    }
+
+    .search-box .icon {
+      position: absolute;
+      right: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 1.2rem;
+      pointer-events: none;
+    }
+
+    #suggestions {
+      width: 100%;
+      max-width: 480px;
+      background: #fff;
+      border: 1.5px solid #d1dbe8;
+      border-radius: 10px;
+      overflow: hidden;
+      margin-bottom: 8px;
+      display: none;
+    }
+
+    .suggestion-item {
+      padding: 12px 18px;
+      cursor: pointer;
+      font-size: 0.95rem;
+      color: #1a3a5c;
+      border-bottom: 1px solid #f0f4f8;
+      transition: background 0.15s;
+    }
+
+    .suggestion-item:last-child { border-bottom: none; }
+    .suggestion-item:hover { background: #eef3fa; }
+
+    .suggestion-item .sub {
+      font-size: 0.78rem;
+      color: #8fa0b4;
+      margin-top: 2px;
+    }
+
+    #result {
+      width: 100%;
+      max-width: 480px;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 4px 20px rgba(26,58,92,0.08);
+      animation: fadeIn 0.25s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 20px;
+      padding-bottom: 16px;
+      border-bottom: 1.5px solid #eef3fa;
+    }
+
+    .avatar {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+      color: #fff;
+      font-size: 1.4rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .card-header-text h2 {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #1a3a5c;
+    }
+
+    .card-header-text p {
+      font-size: 0.82rem;
+      color: #8fa0b4;
+      margin-top: 2px;
+    }
+
+    .section-title {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #3b82f6;
+      margin: 16px 0 8px;
+    }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .info-item {
+      background: #f7fafd;
+      border-radius: 10px;
+      padding: 12px 14px;
+    }
+
+    .info-item.full {
+      grid-column: 1 / -1;
+    }
+
+    .info-label {
+      font-size: 1.2rem;
+      color: #8fa0b4;
+      margin-bottom: 4px;
+    }
+
+    .info-value {
+      font-size: 1.44rem;
+      font-weight: 600;
+      color: #1a3a5c;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 0.82rem;
+      font-weight: 700;
+    }
+
+    .badge-blue  { background: #dbeafe; color: #1d4ed8; }
+    .badge-green { background: #d1fae5; color: #065f46; }
+
+    .day-tabs {
+      display: flex;
+      gap: 8px;
+      margin: 16px 0 12px;
+    }
+
+    .day-tab {
+      flex: 1;
+      padding: 9px 0;
+      border: 2px solid #d1dbe8;
+      border-radius: 10px;
+      background: #fff;
+      color: #8fa0b4;
+      font-size: 1.2rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-family: inherit;
+    }
+
+    .day-tab:hover { border-color: #3b82f6; color: #3b82f6; }
+
+    .day-tab.active {
+      background: #3b82f6;
+      border-color: #3b82f6;
+      color: #fff;
+    }
+
+    .day-panel { display: none; }
+    .day-panel.active { display: block; }
+
+    .no-result {
+      text-align: center;
+      color: #8fa0b4;
+      padding: 32px 0;
+      font-size: 0.95rem;
+    }
+
+    #hint {
+      text-align: center;
+      color: #aab4c0;
+      font-size: 0.85rem;
+      margin-top: 8px;
+    }
+
+    footer {
+      margin-top: 48px;
+      font-size: 0.75rem;
+      color: #c0cdd8;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>✈️ 2026 제주 미션트립</h1>
+  <p>이름 또는 영문 ID(LDAP)로 검색하세요</p>
+</header>
+
+<div class="search-box">
+  <input type="text" id="searchInput" placeholder="예) 헤이든, david.0726" autocomplete="off" />
+  <span class="icon">🔍</span>
+</div>
+
+<div id="suggestions"></div>
+<div id="result"></div>
+<p id="hint">한글 이름 또는 영문 ID 입력</p>
+
+<footer>링키지랩 HR · 2026 제주 미션트립</footer>
+
+<script>
+// ── 데이터 로드 ──────────────────────────────────────────
+let PEOPLE = [];
+
+fetch('data.json')
+  .then(r => r.json())
+  .then(data => { PEOPLE = data; })
+  .catch(() => {
+    document.getElementById('result').innerHTML =
+      '<div class="no-result">데이터를 불러오지 못했습니다.<br>관리자에게 문의하세요.</div>';
+  });
+
+// ── 검색 로직 ────────────────────────────────────────────
+const input = document.getElementById('searchInput');
+const suggestionsEl = document.getElementById('suggestions');
+const resultEl = document.getElementById('result');
+const hintEl = document.getElementById('hint');
+
+input.addEventListener('input', () => {
+  const q = input.value.trim().toLowerCase();
+  suggestionsEl.innerHTML = '';
+  suggestionsEl.style.display = 'none';
+  resultEl.innerHTML = '';
+
+  if (!q) { hintEl.style.display = 'block'; return; }
+  hintEl.style.display = 'none';
+
+  const matches = PEOPLE.filter(p =>
+    p.nickname.toLowerCase().includes(q) ||
+    p.name.toLowerCase().includes(q) ||
+    p.ldap.toLowerCase().includes(q)
+  );
+
+  if (matches.length === 0) {
+    resultEl.innerHTML = '<div class="no-result">검색 결과가 없습니다.<br>이름 또는 영문 ID를 다시 확인해주세요.</div>';
+    return;
+  }
+
+  if (matches.length === 1) {
+    showCard(matches[0]);
+    return;
+  }
+
+  suggestionsEl.style.display = 'block';
+  matches.slice(0, 8).forEach(p => {
+    const div = document.createElement('div');
+    div.className = 'suggestion-item';
+    div.innerHTML = `<div>${p.nickname}${p.name ? ' · ' + p.name : ''}</div><div class="sub">${p.ldap}</div>`;
+    div.addEventListener('click', () => {
+      input.value = p.nickname;
+      suggestionsEl.style.display = 'none';
+      showCard(p);
+    });
+    suggestionsEl.appendChild(div);
+  });
+});
+
+// 외부 클릭 시 자동완성 닫기
+document.addEventListener('click', e => {
+  if (!e.target.closest('.search-box') && !e.target.closest('#suggestions')) {
+    suggestionsEl.style.display = 'none';
+  }
+});
+
+// ── 카드 렌더링 ──────────────────────────────────────────
+function val(v) { return v && v !== 'None' && v !== 'nan' ? v : '—'; }
+
+function showCard(p) {
+  const initial = p.nickname ? p.nickname[0] : '?';
+
+  resultEl.innerHTML = `
+    <div class="card">
+      <div class="card-header">
+        <div class="avatar">${initial}</div>
+        <div class="card-header-text">
+          <h2>${val(p.nickname)}${p.name && p.name !== 'None' ? ` <span style="font-weight:400;font-size:0.9rem;color:#8fa0b4">· ${val(p.name)}</span>` : ''}</h2>
+          <p>${val(p.ldap)}</p>
+        </div>
+      </div>
+
+      <div class="section-title">팀 배정</div>
+      <div class="info-grid">
+        <div class="info-item">
+          <div class="info-label">🚌 버스</div>
+          <div class="info-value big">${val(p.bus)}</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">👥 조</div>
+          <div class="info-value big">${val(p.group)}</div>
+        </div>
+        <div class="info-item full">
+          <div class="info-label">🙋 조장</div>
+          <div class="info-value">${val(p.leader)}</div>
+        </div>
+      </div>
+
+      <div class="day-tabs">
+        <button class="day-tab active" onclick="switchDay(this, 'day1')">1일차</button>
+        <button class="day-tab" onclick="switchDay(this, 'day2')">2일차</button>
+        <button class="day-tab" onclick="switchDay(this, 'day3')">3일차</button>
+      </div>
+
+      <div id="day1" class="day-panel active">
+        <div class="section-title">✈️ 김포 → 제주</div>
+        <div class="info-grid">
+          <div class="info-item full">
+            <div class="info-label">⏰ 김포공항 집결</div>
+            <div class="info-value">${val(p.assembly_time)}</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">항공사</div>
+            <div class="info-value">${val(p.dep_airline)}</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">편명</div>
+            <div class="info-value">${val(p.dep_flight)}</div>
+          </div>
+          <div class="info-item full">
+            <div class="info-label">출발 시간</div>
+            <div class="info-value">${val(p.dep_time)}</div>
+          </div>
+        </div>
+      </div>
+
+      <div id="day2" class="day-panel">
+        <div class="section-title">🍽️ 더클리프</div>
+        <div class="info-grid">
+          <div class="info-item">
+            <div class="info-label">음료</div>
+            <div class="info-value">${val(p.cliff_drink)}</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">푸드박스</div>
+            <div class="info-value">${val(p.cliff_food)}</div>
+          </div>
+        </div>
+      </div>
+
+      <div id="day3" class="day-panel">
+        <div class="section-title">🌿 치유의숲</div>
+        <div class="info-grid">
+          <div class="info-item">
+            <div class="info-label">프로그램</div>
+            <div class="info-value">${val(p.forest_program)}</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">조</div>
+            <div class="info-value">${val(p.forest_group)}</div>
+          </div>
+        </div>
+        <div class="section-title">✈️ 제주 → 김포</div>
+        <div class="info-grid">
+          <div class="info-item">
+            <div class="info-label">항공사</div>
+            <div class="info-value">${val(p.ret_airline)}</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">편명</div>
+            <div class="info-value">${val(p.ret_flight)}</div>
+          </div>
+          <div class="info-item full">
+            <div class="info-label">출발 시간</div>
+            <div class="info-value">${val(p.ret_time)}</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  `;
+}
+
+function switchDay(btn, panelId) {
+  btn.closest('.card').querySelectorAll('.day-tab').forEach(t => t.classList.remove('active'));
+  btn.closest('.card').querySelectorAll('.day-panel').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  btn.closest('.card').querySelector('#' + panelId).classList.add('active');
+}
+</script>
+</body>
+</html>
