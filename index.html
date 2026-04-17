@@ -234,6 +234,12 @@
     .day-panel { display: none; }
     .day-panel.active { display: block; }
 
+    .sr-only {
+      position: absolute; width: 1px; height: 1px;
+      padding: 0; margin: -1px; overflow: hidden;
+      clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+    }
+
     .no-result {
       text-align: center;
       color: #8fa0b4;
@@ -292,15 +298,15 @@
     }
     body.dark .card-header { border-color: #2a3a4e; }
     body.dark .card-header-text h2 { color: #e2eaf4; }
-    body.dark .card-header-text p  { color: #4a6278; }
+    body.dark .card-header-text p  { color: #94afc8; }
     body.dark .info-item { background: #111e2b; }
-    body.dark .info-label { color: #4a6278; }
+    body.dark .info-label { color: #94afc8; }
     body.dark .info-value { color: #e2eaf4; }
     body.dark .section-title { color: #4d9cf0; }
     body.dark .day-tab {
       background: #1a2636;
-      border-color: #2a3a4e;
-      color: #4a6278;
+      border-color: #4a6278;
+      color: #94afc8;
     }
     body.dark .day-tab:hover { border-color: #4d9cf0; color: #4d9cf0; }
     body.dark .day-tab.active {
@@ -321,9 +327,9 @@
 <body>
 
 <div style="position:fixed;top:16px;right:16px;display:flex;gap:6px;z-index:100;">
-  <button class="dark-toggle" onclick="changeFontSize(-1)" id="btnSmall">A−</button>
-  <button class="dark-toggle" onclick="changeFontSize(1)" id="btnLarge">A+</button>
-  <button class="dark-toggle" onclick="toggleDark()" id="darkBtn">🌙 다크</button>
+  <button class="dark-toggle" onclick="changeFontSize(-1)" id="btnSmall" aria-label="글자 크기 줄이기">A−</button>
+  <button class="dark-toggle" onclick="changeFontSize(1)" id="btnLarge" aria-label="글자 크기 크게">A+</button>
+  <button class="dark-toggle" onclick="toggleDark()" id="darkBtn" aria-label="다크모드 켜기">🌙 다크</button>
 </div>
 
 <header>
@@ -332,13 +338,15 @@
 </header>
 
 <div class="search-box">
-  <input type="text" id="searchInput" placeholder="예) 헤이든, david.0726" autocomplete="off" />
-  <span class="icon">🔍</span>
+  <label for="searchInput" class="sr-only">이름 또는 영문 ID로 검색</label>
+  <input type="text" id="searchInput" placeholder="예) 헤이든, david.0726" autocomplete="off"
+    aria-autocomplete="list" aria-controls="suggestions" aria-label="이름 또는 영문 ID로 검색" />
+  <span class="icon" aria-hidden="true">🔍</span>
 </div>
 
-<div id="suggestions"></div>
-<div id="result"></div>
-<p id="hint">한글 이름 또는 영문 ID 입력</p>
+<div id="suggestions" role="listbox" aria-label="검색 후보 목록"></div>
+<div id="result" aria-live="polite" aria-atomic="true"></div>
+<p id="hint" aria-live="polite">한글 이름 또는 영문 ID 입력</p>
 
 <footer>링키지랩</footer>
 
@@ -383,6 +391,7 @@ input.addEventListener('input', () => {
   if (matches.length === 1) {
     showCard(matches[0]);
     applyFontSize();
+    document.querySelector('.card')?.focus();
     return;
   }
 
@@ -390,13 +399,19 @@ input.addEventListener('input', () => {
   matches.slice(0, 8).forEach(p => {
     const div = document.createElement('div');
     div.className = 'suggestion-item';
+    div.setAttribute('role', 'option');
+    div.setAttribute('tabindex', '0');
+    div.setAttribute('aria-label', `${p.nickname}${p.name ? ' · ' + p.name : ''}, ${p.ldap}`);
     div.innerHTML = `<div>${p.nickname}${p.name ? ' · ' + p.name : ''}</div><div class="sub">${p.ldap}</div>`;
-    div.addEventListener('click', () => {
+    const select = () => {
       input.value = p.nickname;
       suggestionsEl.style.display = 'none';
       showCard(p);
       applyFontSize();
-    });
+      document.querySelector('.card')?.focus();
+    };
+    div.addEventListener('click', select);
+    div.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); select(); } });
     suggestionsEl.appendChild(div);
   });
 });
@@ -415,9 +430,9 @@ function showCard(p) {
   const initial = p.nickname ? p.nickname[0] : '?';
 
   resultEl.innerHTML = `
-    <div class="card">
+    <div class="card" tabindex="-1">
       <div class="card-header">
-        <div class="avatar">${initial}</div>
+        <div class="avatar" aria-hidden="true">${initial}</div>
         <div class="card-header-text">
           <h2>${val(p.nickname)}${p.name && p.name !== 'None' ? ` <span style="font-weight:400;font-size:0.9em;color:#8fa0b4">· ${val(p.name)}</span>` : ''}</h2>
           <p>${val(p.ldap)}</p>
@@ -425,7 +440,8 @@ function showCard(p) {
       </div>
 
       <div class="card-body">
-      <div class="section-title">팀 배정</div>
+      <div class="section-title" aria-hidden="true">팀 배정</div>
+      <h3 class="sr-only">팀 배정</h3>
       <div class="info-grid">
         <div class="info-item">
           <div class="info-label">🚌 버스</div>
@@ -441,14 +457,14 @@ function showCard(p) {
         </div>
       </div>
 
-      <div class="day-tabs">
-        <button class="day-tab active" onclick="switchDay(this, 'day1')">1일차</button>
-        <button class="day-tab" onclick="switchDay(this, 'day2')">2일차</button>
-        <button class="day-tab" onclick="switchDay(this, 'day3')">3일차</button>
+      <div class="day-tabs" role="tablist" aria-label="일차별 정보">
+        <button class="day-tab active" role="tab" aria-selected="true" aria-controls="day1" onclick="switchDay(this, 'day1')">1일차</button>
+        <button class="day-tab" role="tab" aria-selected="false" aria-controls="day2" onclick="switchDay(this, 'day2')">2일차</button>
+        <button class="day-tab" role="tab" aria-selected="false" aria-controls="day3" onclick="switchDay(this, 'day3')">3일차</button>
       </div>
 
-      <div id="day1" class="day-panel active">
-        <div class="section-title">✈️ 김포 → 제주</div>
+      <div id="day1" class="day-panel active" role="tabpanel" aria-label="1일차">
+        <div class="section-title"><span aria-hidden="true">✈️</span> 김포 → 제주</div>
         <div class="info-grid">
           <div class="info-item full">
             <div class="info-label">⏰ 김포공항 집결</div>
@@ -469,8 +485,8 @@ function showCard(p) {
         </div>
       </div>
 
-      <div id="day2" class="day-panel">
-        <div class="section-title">🍽️ 더클리프</div>
+      <div id="day2" class="day-panel" role="tabpanel" aria-label="2일차">
+        <div class="section-title"><span aria-hidden="true">🍽️</span> 더클리프</div>
         <div class="info-grid">
           <div class="info-item">
             <div class="info-label">음료</div>
@@ -483,8 +499,8 @@ function showCard(p) {
         </div>
       </div>
 
-      <div id="day3" class="day-panel">
-        <div class="section-title">🌿 치유의숲</div>
+      <div id="day3" class="day-panel" role="tabpanel" aria-label="3일차">
+        <div class="section-title"><span aria-hidden="true">🌿</span> 치유의숲</div>
         <div class="info-grid">
           <div class="info-item">
             <div class="info-label">프로그램</div>
@@ -495,7 +511,7 @@ function showCard(p) {
             <div class="info-value">${val(p.forest_group)}</div>
           </div>
         </div>
-        <div class="section-title">✈️ 제주 → 김포</div>
+        <div class="section-title"><span aria-hidden="true">✈️</span> 제주 → 김포</div>
         <div class="info-grid">
           <div class="info-item">
             <div class="info-label">항공사</div>
@@ -534,7 +550,9 @@ applyFontSize();
 
 function toggleDark() {
   const isDark = document.body.classList.toggle('dark');
-  document.getElementById('darkBtn').textContent = isDark ? '☀️ 라이트' : '🌙 다크';
+  const btn = document.getElementById('darkBtn');
+  btn.textContent = isDark ? '☀️ 라이트' : '🌙 다크';
+  btn.setAttribute('aria-label', isDark ? '라이트모드로 전환' : '다크모드로 전환');
   localStorage.setItem('darkMode', isDark);
 }
 
@@ -544,9 +562,13 @@ if (localStorage.getItem('darkMode') === 'true') {
 }
 
 function switchDay(btn, panelId) {
-  btn.closest('.card').querySelectorAll('.day-tab').forEach(t => t.classList.remove('active'));
+  btn.closest('.card').querySelectorAll('.day-tab').forEach(t => {
+    t.classList.remove('active');
+    t.setAttribute('aria-selected', 'false');
+  });
   btn.closest('.card').querySelectorAll('.day-panel').forEach(p => p.classList.remove('active'));
   btn.classList.add('active');
+  btn.setAttribute('aria-selected', 'true');
   btn.closest('.card').querySelector('#' + panelId).classList.add('active');
 }
 </script>
