@@ -362,7 +362,7 @@
 // ── 데이터 로드 ──────────────────────────────────────────
 let PEOPLE = [];
 
-fetch('data.json')
+fetch('https://script.google.com/macros/s/AKfycbxG8O7skxKjL-Kg8QVUD4GoKAbLdE-_R3gqcSyrEBIDTKx8iVvG4cpvPf6Scd3dx4k/exec')
   .then(r => r.json())
   .then(data => { PEOPLE = data; })
   .catch(() => {
@@ -532,7 +532,7 @@ function showCard(p) {
             <div class="info-value">${val(p.forest_program)}</div>
           </div>
           <div class="info-item">
-            <div class="info-label">조</div>
+            <div class="info-label">프로그램 조장</div>
             <div class="info-value">${val(p.forest_group)}</div>
           </div>
         </div>
